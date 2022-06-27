@@ -4,7 +4,7 @@ const { parseDocument } = YAML;
 
 /**
  * @param {string} content
- * @param {string[]} nodeVersionsToRemove
+ * @param {number[]} nodeVersionsToRemove
  *
  * @return {boolean}
  */
