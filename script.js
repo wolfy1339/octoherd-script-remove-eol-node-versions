@@ -1,5 +1,5 @@
 // @ts-check
-import { composeCreateOrUpdateTextFile } from '@octokit/plugin-create-or-update-text-file';
+import { composeCreatePullRequest } from 'octokit-plugin-create-pull-request';
 import prettier from 'prettier';
 import { hasNodeVersionToRemove } from './utils/yaml-parser.js';
 import { parseDocument, stringify } from 'yaml';
@@ -27,7 +27,7 @@ const isYamlFile = fileName => /\.ya?ml$/.test(fileName);
 
 
 /**
- * Creates an issue on each repo when a certain condition or group of conditions are accomplished
+ * An octoherd script to remove EOL NodeJS versions from @octokit repositories
  *
  * @param {import('@octoherd/cli').Octokit} octokit
  * @param {import('@octoherd/cli').Repository} repository
@@ -42,21 +42,36 @@ export async function script(octokit, repository) {
   // Global variables used throughout the code
   const owner = repository.owner.login;
   const repo = repository.name;
-  const defaultBranch = repository.default_branch;
   const branchName = 'remove-eol-node-versions';
+  /** @type {import('octokit-plugin-create-pull-request').createPullRequest.Changes[]} */
+  const changes = [
+    {
+      files: {
+        'package.json': ({ exists, encoding, content }) => {
+          if (!exists) return null;
 
-  /**
-   *
-   * @param {Exclude<import('@octokit/openapi-types').components["schemas"]["content-tree"]['entries'], undefined>[number] | import('@octokit/openapi-types').components["schemas"]["content-tree"]} file
-   */
-  async function updateYamlFile(file) {
+          const pkg = JSON.parse(content);
+
+          pkg.engines ??= {};
+          pkg.engines.node = `>= 14`;
+
+          pkg['@pika/pack'].pipeline[1].append({
+            minNodeVersion: '14'
+          });
+
+          return prettier.format(JSON.stringify(pkg), { parser: 'json-stringify' });
+        }
+      },
+      commit: 'build(package): set minimal node version in engines field to v14',
+      emptyCommit: false
+    }
+  ];
+
+  function updateYamlFile({ content, encoding, exists }) {
+    if (!exists) return null;
     octokit.log.info('Checking \'%s\' in \'%s\' repo', file.name, repo);
 
-    if (
-      file.content &&
-        // @ts-expect-error
-        hasNodeVersionToRemove(file.content, NODE_VERSIONS_TO_REMOVE)
-    ) {
+    if (hasNodeVersionToRemove(content, NODE_VERSIONS_TO_REMOVE)) {
       octokit.log.warn(
           'The repository \'%s\' HAS a node_version %s to be removed in its GitHub Actions.\n %s',
           repo,
@@ -66,8 +81,7 @@ export async function script(octokit, repository) {
 
       // Update Node versions used in GitHub Actions
       const yamlDocument = parseDocument(
-          // @ts-expect-error
-          Buffer.from(file.content, 'base64').toString('utf-8')
+          Buffer.from(content, encoding).toString('utf-8')
       );
 
       /** @type {import('yaml').YAMLMap<string>} */
@@ -86,22 +100,7 @@ export async function script(octokit, repository) {
         }
       }
 
-      // @ts-expect-error
-      const { data: { commit }, updated } = await composeCreateOrUpdateTextFile(octokit, {
-        owner,
-        repo,
-        path: `.github/workflows/${file.name}`,
-        branch: branchName,
-        message: `ci: stop testing against NodeJS ${NODE_VERSIONS_STRING}
-  
-          BREAKING CHANGES: Drop support for NodeJS ${NODE_VERSIONS_STRING}
-          `,
-        content: prettier.format(stringify(yamlDocument), { parser: 'yaml' })
-      });
-
-      octokit.log.info('Issue created for \'%s\': %s', repo, commit.html_url);
-
-      return { commit, updated };
+      return prettier.format(stringify(yamlDocument), { parser: 'yaml' });
     }
     octokit.log.info(
         'The repository \'%s\' does not have any usage of node_version %s to be removed in its GitHub Actions',
@@ -109,38 +108,8 @@ export async function script(octokit, repository) {
         `${NODE_VERSIONS_TO_REMOVE}`
     );
 
-    return { commit: null, updated: false };
+    return content;
   }
-
-  // Get info on repository branches
-  const { data: branches } = await octokit.request('GET /repos/{owner}/{repo}/branches', {
-    owner,
-    repo,
-    branch: defaultBranch
-  });
-
-  // Get SHA of repository's default branch
-  let sha = branches.filter(branch => branch.name === defaultBranch).map(branch => branch.commit.sha)[0];
-  const branchExists = branches.some(branch => branch.name === branchName);
-
-  // Create branch if not present
-  if (!branchExists) {
-    const ref = await octokit.request('POST /repos/{owner}/{repo}/git/refs', {
-      owner,
-      repo,
-      ref: `refs/heads/${branchName}`,
-      sha
-    }).then(response => response.data.ref);
-
-    if (!ref) {
-      octokit.log.warn(`Error creating branch in ${repository.html_url}`);
-
-      return;
-    }
-  } else {
-    sha = branches.filter(branch => branch.name === branchName).map(branch => branch.commit.sha)[0];
-  }
-
 
   /** @type {Exclude<import('@octokit/openapi-types').components["schemas"]["content-tree"]['entries'], undefined> | [import('@octokit/openapi-types').components["schemas"]["content-tree"]]} */
   let files;
@@ -176,87 +145,35 @@ export async function script(octokit, repository) {
     throw e;
   }
 
-  const commits = [];
-
   if (files.length) {
     for (const file of files) {
-      const { commit, updated } = await updateYamlFile(file);
-
-      if (commit) {
-        commits.push(commit);
-      }
+      changes.push({
+        files: {
+          [`.github/workflows/${file.name}`]: updateYamlFile
+        },
+        commit: `ci: stop testing against NodeJS ${NODE_VERSIONS_STRING}`,
+        emptyCommit: false
+      });
     }
   } else {
     octokit.log.info('There is no file %s in repository %s', PATH, repo);
   }
 
-  // Update package.json
-  // @ts-expect-error
-  const { data: { commit: pkgCommit }, updated: pkgUpdated } = await composeCreateOrUpdateTextFile(octokit, {
+  //
+  // Pull Request
+  //
+
+  const pr = await composeCreatePullRequest(octokit, {
     owner,
     repo,
-    path: 'package.json',
-    branch: branchName,
-    message: 'build(package): set minimal node version in engines field to v14',
-    content: ({ exists, content }) => {
-      if (!exists) return null;
-
-      const pkg = JSON.parse(content);
-
-      pkg.engines ??= {};
-      pkg.engines.node = `>= 14`;
-
-      pkg['@pika/pack'].pipeline[1].append({
-        minNodeVersion: '14'
-      });
-
-      return prettier.format(JSON.stringify(pkg), { parser: 'json-stringify' });
-    }
+    title: `ci: stop testing against NodeJS ${NODE_VERSIONS_STRING}`,
+    body: `BREAKING CHANGES: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
+    head: branchName,
+    changes,
+    createWhenEmpty: false
   });
 
-  if (pkgUpdated) {
-    octokit.log.info(
-        `package.json updated in ${repository.html_url} via ${pkgCommit.html_url}`
-    );
-  }
 
-  if (!pkgUpdated && !updated) return;
-
-  /** @type {import('@octokit/types').OctokitResponse<import('@octokit/openapi-types').components["schemas"]["pull-request-simple"][]>} */
-  const { data: pulls } = await octokit.request('GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls', {
-    owner,
-    repo,
-    commit_sha: (commits[0] || pkgCommit).sha,
-    mediaType: {
-      previews: [
-        'groot'
-      ]
-    }
-  });
-
-  if (!pulls.length) {
-    //
-    // Pull Request
-    //
-
-    // Create pull request
-    const { data: pr } = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
-      owner,
-      repo,
-      head: branchName,
-      base: defaultBranch,
-      title: `ci: stop testing against NodeJS ${NODE_VERSIONS_STRING}`,
-      body: `BREAKING CHANGES: Drop support for NodeJS ${NODE_VERSIONS_STRING}`
-    });
-
-    octokit.log.info(`Create Pull Request at ${pr.html_url}`);
-
-    // Add the "maintenance" label to the pull request
-    await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
-      owner,
-      repo,
-      issue_number: pr.number,
-      labels: ['maintenance']
-    });
-  }
+  if (pr)
+    octokit.log.info(`Pull request created: ${pr.data.html_url}`);
 }
