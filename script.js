@@ -67,8 +67,14 @@ export async function script(octokit, repository) {
     }
   ];
 
-  function updateYamlFile({ content, encoding, exists }) {
+  /**
+   * @param {Exclude<import('@octokit/openapi-types').components["schemas"]["content-tree"]['entries'], undefined>[number] | import('@octokit/openapi-types').components["schemas"]["content-tree"]} file
+   * @param {import('octokit-plugin-create-pull-request').createPullRequest.UpdateFunctionFile} options
+   * @returns {string | null}
+   */
+  function updateYamlFile(file, { content, encoding, exists }) {
     if (!exists) return null;
+
     octokit.log.info('Checking \'%s\' in \'%s\' repo', file.name, repo);
 
     if (hasNodeVersionToRemove(content, NODE_VERSIONS_TO_REMOVE)) {
@@ -149,7 +155,7 @@ export async function script(octokit, repository) {
     for (const file of files) {
       changes.push({
         files: {
-          [`.github/workflows/${file.name}`]: updateYamlFile
+          [`.github/workflows/${file.name}`]: updateYamlFile.bind(null, file)
         },
         commit: `ci: stop testing against NodeJS ${NODE_VERSIONS_STRING}`,
         emptyCommit: false
