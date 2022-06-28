@@ -19,7 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@octoherd/cli": "^3.4.8",
-    "octokit-plugin-create-pull-request": "^3.11.0",
+    "octokit-plugin-create-pull-request": "^3.12.1",
     "prettier": "^2.7.1",
     "yaml": "^2.1.1"
   },
