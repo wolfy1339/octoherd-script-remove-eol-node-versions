@@ -50,12 +50,12 @@ export async function script(octokit, repository) {
         'package.json': ({ exists, encoding, content }) => {
           if (!exists) return null;
 
-          const pkg = JSON.parse(content);
+          const pkg = JSON.parse(Buffer.from(content, encoding).toString('utf-8'));
 
           pkg.engines ??= {};
           pkg.engines.node = `>= 14`;
 
-          pkg['@pika/pack'].pipeline[1].append({
+          pkg['@pika/pack'].pipeline[1].push({
             minNodeVersion: '14'
           });
 
@@ -173,7 +173,7 @@ export async function script(octokit, repository) {
     owner,
     repo,
     title: `ci: stop testing against NodeJS ${NODE_VERSIONS_STRING}`,
-    body: `BREAKING CHANGES: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
+    body: `BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
     head: branchName,
     changes,
     createWhenEmpty: false
