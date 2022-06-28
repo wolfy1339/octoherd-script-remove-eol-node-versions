@@ -176,7 +176,8 @@ export async function script(octokit, repository) {
     body: `BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
     head: branchName,
     changes,
-    createWhenEmpty: false
+    createWhenEmpty: false,
+    update: true
   });
 
 
