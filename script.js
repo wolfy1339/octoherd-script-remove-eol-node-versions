@@ -114,7 +114,7 @@ export async function script(octokit, repository) {
         `${NODE_VERSIONS_TO_REMOVE}`
     );
 
-    return content;
+    return Buffer.from(content, encoding).toString('utf-8');
   }
 
   /** @type {Exclude<import('@octokit/openapi-types').components["schemas"]["content-tree"]['entries'], undefined> | [import('@octokit/openapi-types').components["schemas"]["content-tree"]]} */
