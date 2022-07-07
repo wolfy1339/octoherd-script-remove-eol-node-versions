@@ -55,9 +55,16 @@ export async function script(octokit, repository) {
           pkg.engines ??= {};
           pkg.engines.node = `>= 14`;
 
-          pkg['@pika/pack'].pipeline[1].push({
-            minNodeVersion: '14'
-          });
+          const pika = pkg['@pika/pack'];
+
+          if (pika) {
+            const pipelineStep = pika.pipeline[1];
+
+            if (pipelineStep.length === 1)
+              pipelineStep.push({
+                minNodeVersion: '14'
+              });
+          }
 
           return prettier.format(JSON.stringify(pkg), { parser: 'json-stringify' });
         }
