@@ -1,0 +1,41 @@
+{
+  "name": "octoherd-script-remove-eol-node-versions",
+  "version": "0.0.0-development",
+  "description": "An octoherd script to remove EOL NodeJS versions from @octokit repositories",
+  "type": "module",
+  "exports": "./script.js",
+  "bin": {
+    "octoherd-sript-remove-eol-node-versions": "./cli.js"
+  },
+  "scripts": {
+    "start": "node cli.js",
+    "test": "node script.js"
+  },
+  "repository": "https://github.com/wolfy1339/octoherd-script-remove-eol-node-versions",
+  "keywords": [
+    "octoherd-script"
+  ],
+  "author": "wolfy1339 <webmaster@wolfy1339.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@octoherd/cli": "^3.4.8",
+    "octokit-plugin-create-pull-request": "^3.12.1",
+    "prettier": "^2.7.1",
+    "yaml": "^2.1.1"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@hellomouse/eslint-config-wolfy1339": "^1.3.0",
+    "@types/eslint": "^8.4.3",
+    "@types/node": "^18.0.0",
+    "eslint": "^8.18.0",
+    "eslint-plugin-jsdoc": "^39.3.3"
+  }
+}
