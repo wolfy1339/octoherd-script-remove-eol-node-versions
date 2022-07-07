@@ -4,7 +4,7 @@ import prettier from 'prettier';
 import { hasNodeVersionToRemove } from './utils/yaml-parser.js';
 import { parseDocument, stringify } from 'yaml';
 
-const PATH = '.github/workflows/test.yml';
+const PATH = '.github/workflows';
 const NODE_VERSIONS_TO_REMOVE = [10, 12];
 const NODE_VERSIONS = [14, 16, 18];
 const NODE_VERSIONS_STRING = NODE_VERSIONS_TO_REMOVE.map(e => `v${e}`).join(', ');
