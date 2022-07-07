@@ -62,7 +62,8 @@ export async function script(octokit, repository) {
           return prettier.format(JSON.stringify(pkg), { parser: 'json-stringify' });
         }
       },
-      commit: 'build(package): set minimal node version in engines field to v14',
+      commit: `build(package): set minimal node version in engines field to v14
+      BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
       emptyCommit: false
     }
   ];
