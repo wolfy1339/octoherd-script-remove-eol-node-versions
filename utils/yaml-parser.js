@@ -23,7 +23,7 @@ export function hasNodeVersionToRemove(content, nodeVersionsToRemove) {
 
     if (nodeVersions) {
       for (const { value: nodeVersion } of nodeVersions.items) {
-        if (nodeVersionsToRemove.includes(nodeVersion)) {
+        if (nodeVersionsToRemove.includes(nodeVersion) || nodeVersionsToRemove.map(String).includes(nodeVersion)) {
           return true;
         }
       }
