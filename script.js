@@ -72,6 +72,19 @@ export async function script(octokit, repository) {
       commit: `build(package): set minimal node version in engines field to v14
       BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
       emptyCommit: false
+    },
+    {
+      files: {
+        'scripts/build.mjs': ({ exists, encoding, content }) => {
+          if (!exists) return null;
+
+          return prettier.format(Buffer.from(content, encoding)
+              .toString('utf-8')
+              .replace(/node14/g, `node${NODE_VERSIONS[0]}`));
+        }
+      },
+      commit: `build: set minimal node version in build script to v14`
+
     }
   ];
 
