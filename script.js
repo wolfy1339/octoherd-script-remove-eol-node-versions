@@ -70,7 +70,7 @@ export async function script(octokit, repository) {
         }
       },
       commit: `build(package): set minimal node version in engines field to v14
-      BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
+BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
       emptyCommit: false
     },
     {
