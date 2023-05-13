@@ -5,8 +5,8 @@ import { hasNodeVersionToRemove } from './utils/yaml-parser.js';
 import { parseDocument, stringify } from 'yaml';
 
 const PATH = '.github/workflows';
-const NODE_VERSIONS_TO_REMOVE = [10, 12];
-const NODE_VERSIONS = [14, 16, 18];
+const NODE_VERSIONS_TO_REMOVE = [14];
+const NODE_VERSIONS = [16, 18, 20];
 const NODE_VERSIONS_STRING = NODE_VERSIONS_TO_REMOVE.map(e => `v${e}`).join(', ');
 
 /**
@@ -53,7 +53,7 @@ export async function script(octokit, repository) {
           const pkg = JSON.parse(Buffer.from(content, encoding).toString('utf-8'));
 
           pkg.engines ??= {};
-          pkg.engines.node = `>= 14`;
+          pkg.engines.node = `>= 16`;
 
           const pika = pkg['@pika/pack'];
 
@@ -62,7 +62,7 @@ export async function script(octokit, repository) {
 
             if (pipelineStep.length === 1)
               pipelineStep.push({
-                minNodeVersion: '14'
+                minNodeVersion: '16'
               });
           }
 
