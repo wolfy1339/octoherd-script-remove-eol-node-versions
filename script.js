@@ -53,7 +53,7 @@ export async function script(octokit, repository) {
           const pkg = JSON.parse(Buffer.from(content, encoding).toString('utf-8'));
 
           pkg.engines ??= {};
-          pkg.engines.node = `>= 16`;
+          pkg.engines.node = `>= ${NODE_VERSIONS[0]}`;
 
           const pika = pkg['@pika/pack'];
 
@@ -62,7 +62,7 @@ export async function script(octokit, repository) {
 
             if (pipelineStep.length === 1)
               pipelineStep.push({
-                minNodeVersion: '16'
+                minNodeVersion: NODE_VERSIONS[0]
               });
           }
 
