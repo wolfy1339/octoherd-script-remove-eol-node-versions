@@ -211,7 +211,7 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
       owner,
       repo,
       issue_number: number,
-      labels: ['Type: Maintenance']
+      labels: ['Type: Maintenance', 'Type: Breaking Change']
     });
   }
 }
