@@ -202,6 +202,16 @@ export async function script(octokit, repository) {
   });
 
 
-  if (pr)
-    octokit.log.info(`Pull request created: ${pr.data.html_url}`);
+  if (pr) {
+    const { data: { number, html_url } } = pr;
+
+    octokit.log.info(`Pull request created: ${html_url}`);
+
+    octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
+      owner,
+      repo,
+      issue_number: number,
+      labels: ['Type: Maintenance']
+    });
+  }
 }
