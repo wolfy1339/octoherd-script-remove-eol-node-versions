@@ -5,7 +5,6 @@ const { parseDocument } = YAML;
 /**
  * @param {string} content
  * @param {number[]} nodeVersionsToRemove
- *
  * @return {boolean}
  */
 export function hasNodeVersionToRemove(content, nodeVersionsToRemove) {
@@ -16,13 +15,15 @@ export function hasNodeVersionToRemove(content, nodeVersionsToRemove) {
   const jobs = yamlDocument.get('jobs');
 
   for (const { value: job } of jobs.items) {
-    const nodeVersions = job
+    /** @type {import('../script').YAMLWorkflow} */
+    const matrix = job
         .get('strategy')
-        ?.get('matrix')
-        ?.get('node_version');
+        ?.get('matrix');
+
+    const nodeVersions = matrix?.items.find(({ key }) => key.value === 'node' || key.value === 'node_version');
 
     if (nodeVersions) {
-      for (const { value: nodeVersion } of nodeVersions.items) {
+      for (const { value: nodeVersion } of nodeVersions.value.items) {
         if (nodeVersionsToRemove.includes(nodeVersion) || nodeVersionsToRemove.map(String).includes(nodeVersion)) {
           return true;
         }

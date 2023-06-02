@@ -17,6 +17,21 @@ const NODE_VERSIONS_STRING = NODE_VERSIONS_TO_REMOVE.map(e => `v${e}`).join(', '
  */
 
 /**
+ * @typedef {import('yaml').YAMLMap<YAMLStringScalar, import('yaml').YAMLMap<YAMLStringScalar, import('yaml').YAMLMap<YAMLStringScalar, YAMLNodeVersionMap>>>} YAMLWorkflow
+ */
+
+/**
+ * @typedef {import('yaml').Scalar<string>} YAMLStringScalar
+ */
+/**
+ * @typedef {import('yaml').YAMLMap<import('yaml').Scalar<'node' | 'node_version'>, YAMLNumberSequence>} YAMLNodeVersionMap
+ */
+
+/**
+ * @typedef {import('yaml').YAMLSeq<import('yaml').Scalar<number>>} YAMLNumberSequence
+ */
+
+/**
  * Check if a filename is a YAML file
  *
  * @param {string} fileName FileName to be tested
@@ -114,19 +129,19 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
           Buffer.from(content, encoding).toString('utf-8')
       );
 
-      /** @type {import('yaml').YAMLMap<string>} */
+      /** @type {YAMLWorkflow} */
       // @ts-expect-error Why is this `unknown`?
       const jobs = yamlDocument.get('jobs');
 
       for (const { value: job, key: jobName } of jobs.items) {
-        /** @type {import('yaml').YAMLSeq<number> | undefined} */
-        const nodeVersions = job
-            .get('strategy')
-            ?.get('matrix')
-            ?.get('node_version');
+        const matrix = job
+            ?.get('strategy')
+            ?.get('matrix');
+
+        const nodeVersions = matrix?.items.find(({ key }) => key.value === 'node' || key.value === 'node_version');
 
         if (nodeVersions) {
-          yamlDocument.setIn(['jobs', jobName, 'strategy', 'matrix', 'node_version'], NODE_VERSIONS);
+          yamlDocument.setIn(['jobs', jobName, 'strategy', 'matrix', nodeVersions.key.value], NODE_VERSIONS);
         }
       }
 
