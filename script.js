@@ -5,8 +5,8 @@ import { hasNodeVersionToRemove } from './utils/yaml-parser.js';
 import { parseDocument, stringify } from 'yaml';
 
 const PATH = '.github/workflows';
-const NODE_VERSIONS_TO_REMOVE = [14];
-const NODE_VERSIONS = [16, 18, 20];
+const NODE_VERSIONS_TO_REMOVE = [14, 16];
+const NODE_VERSIONS = [18, 20];
 const NODE_VERSIONS_STRING = NODE_VERSIONS_TO_REMOVE.map(e => `v${e}`).join(', ');
 
 /**
