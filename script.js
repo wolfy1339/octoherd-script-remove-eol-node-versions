@@ -33,9 +33,7 @@ const NODE_VERSIONS_STRING = NODE_VERSIONS_TO_REMOVE.map(e => `v${e}`).join(', '
 
 /**
  * Check if a filename is a YAML file
- *
  * @param {string} fileName FileName to be tested
- *
  * @return {boolean}
  */
 const isYamlFile = fileName => /\.ya?ml$/.test(fileName);
@@ -43,7 +41,6 @@ const isYamlFile = fileName => /\.ya?ml$/.test(fileName);
 
 /**
  * An octoherd script to remove EOL NodeJS versions from @octokit repositories
- *
  * @param {import('@octoherd/cli').Octokit} octokit
  * @param {import('@octoherd/cli').Repository} repository
  */
@@ -109,7 +106,7 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
   /**
    * @param {Exclude<import('@octokit/openapi-types').components["schemas"]["content-tree"]['entries'], undefined>[number] | import('@octokit/openapi-types').components["schemas"]["content-tree"]} file
    * @param {import('octokit-plugin-create-pull-request').createPullRequest.UpdateFunctionFile} options
-   * @returns {string | null}
+   * @return {string | null}
    */
   function updateYamlFile(file, { content, encoding, exists }) {
     if (!exists) return null;
