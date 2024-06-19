@@ -18,8 +18,8 @@
   "author": "wolfy1339 <webmaster@wolfy1339.com>",
   "license": "ISC",
   "dependencies": {
-    "@octoherd/cli": "^3.6.5",
-    "octokit-plugin-create-pull-request": "^4.1.2",
+    "@octoherd/cli": "^5.0.0",
+    "octokit-plugin-create-pull-request": "^5.0.0",
     "prettier": "^2.8.8",
     "yaml": "^2.2.2"
   },
