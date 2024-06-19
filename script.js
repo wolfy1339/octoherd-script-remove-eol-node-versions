@@ -81,10 +81,14 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
 
           return prettier.format(Buffer.from(content, encoding)
               .toString('utf-8')
-              .replace(/node14/g, `node${NODE_VERSIONS[0]}`));
+              .replace(
+                  new RegExp(`node${NODE_VERSIONS_TO_REMOVE.join('|')}`, 'g'),
+                  `node${NODE_VERSIONS[0]}`
+              )
+          );
         }
       },
-      commit: `build: set minimal node version in build script to v14`
+      commit: `build: set minimal node version in build script to v${NODE_VERSIONS[0]}`
 
     }
   ];
