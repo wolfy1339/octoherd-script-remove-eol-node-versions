@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@hellomouse/eslint-config-wolfy1339": "^1.4.1",
-    "@types/eslint": "^8.37.0",
+    "@types/eslint": "^9.0.0",
     "@types/node": "^20.1.4",
     "eslint": "^8.40.0",
     "eslint-plugin-jsdoc": "^44.2.3"
