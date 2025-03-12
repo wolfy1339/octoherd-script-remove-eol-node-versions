@@ -9,11 +9,12 @@ module.exports = {
     '@hellomouse/wolfy1339'
   ],
   parserOptions: {
-    ecmaVersion: 2021,
+    ecmaVersion: 2022,
     sourceType: 'module'
   },
   rules: {
     'no-unused-vars': 1,
-    'valid-jsdoc': 0
+    'valid-jsdoc': 0,
+    'jsdoc/no-defaults': 0
   }
 };

@@ -1,6 +1,4 @@
-import YAML from 'yaml';
-
-const { parseDocument } = YAML;
+import { parseDocument } from 'yaml';
 
 /**
  * @param {string} content
@@ -8,9 +6,7 @@ const { parseDocument } = YAML;
  * @return {boolean}
  */
 export function hasNodeVersionToRemove(content, nodeVersionsToRemove) {
-  const yamlDocument = parseDocument(
-      Buffer.from(content, 'base64').toString('utf-8')
-  );
+  const yamlDocument = parseDocument(content);
 
   const jobs = yamlDocument.get('jobs');
 
@@ -23,11 +19,10 @@ export function hasNodeVersionToRemove(content, nodeVersionsToRemove) {
     const nodeVersions = matrix?.items.find(({ key }) => key.value === 'node' || key.value === 'node_version');
 
     if (nodeVersions) {
-      for (const { value: nodeVersion } of nodeVersions.value.items) {
-        if (nodeVersionsToRemove.includes(nodeVersion) || nodeVersionsToRemove.map(String).includes(nodeVersion)) {
-          return true;
-        }
-      }
+      return nodeVersions.value.items.some(
+          ({ value: nodeVersion }) => nodeVersionsToRemove.includes(nodeVersion) ||
+          nodeVersionsToRemove.map(String).includes(nodeVersion)
+      );
     }
   }
 
