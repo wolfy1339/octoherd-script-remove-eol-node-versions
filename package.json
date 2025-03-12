@@ -36,6 +36,6 @@
     "@types/eslint": "^8.37.0",
     "@types/node": "^20.1.4",
     "eslint": "^8.40.0",
-    "eslint-plugin-jsdoc": "^44.2.3"
+    "eslint-plugin-jsdoc": "^50.0.0"
   }
 }
