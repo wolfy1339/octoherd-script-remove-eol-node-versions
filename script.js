@@ -229,7 +229,8 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
     head: branchName,
     changes,
     createWhenEmpty: false,
-    update: true
+    update: true,
+    labels: update ? ['Type: Maintenance'] : ['Type: Maintenance', 'Type: Breaking Change']
   });
 
 
@@ -237,12 +238,5 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
     const { data: { number, html_url } } = pr;
 
     octokit.log.info(`Pull request created: ${html_url}`);
-
-    octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
-      owner,
-      repo,
-      issue_number: number,
-      labels: update ? ['Type: Maintenance'] : ['Type: Maintenance', 'Type: Breaking Change']
-    });
   }
 }
