@@ -32,10 +32,10 @@
     "access": "public"
   },
   "devDependencies": {
-    "@hellomouse/eslint-config-wolfy1339": "^1.4.1",
-    "@types/eslint": "^8.37.0",
+    "@hellomouse/eslint-config-wolfy1339": "^2.0.1",
+    "@types/eslint": "^9.6.1",
     "@types/node": "^20.1.4",
-    "eslint": "^8.40.0",
-    "eslint-plugin-jsdoc": "^44.2.3"
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0"
   }
 }
