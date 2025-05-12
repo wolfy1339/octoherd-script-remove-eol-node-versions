@@ -178,7 +178,7 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
           step?.get('uses').includes('actions/setup-node')
         );
 
-        if (nodeVersion) {
+        if (nodeVersion !== -1 && nodeVersion !== undefined) {
           yamlDocument.setIn(['jobs', jobName, 'steps', nodeVersion, 'with', 'node-version'], NODE_VERSIONS.at(-1));
         }
       }
