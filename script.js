@@ -1,12 +1,12 @@
 // @ts-check
 import { composeCreatePullRequest } from 'octokit-plugin-create-pull-request';
 import prettier from 'prettier';
-import { hasNodeVersionToRemove } from './utils/yaml-parser.js';
+import { hasNodeVersionMatrixToRemove, hasNodeVersionToRemove } from './utils/yaml-parser.js';
 import { parseDocument, stringify } from 'yaml';
 
 const PATH = '.github/workflows';
-const NODE_VERSIONS_TO_REMOVE = [10, 12, 14, 16];
-const NODE_VERSIONS = [18, 20, 22];
+const NODE_VERSIONS_TO_REMOVE = [18];
+const NODE_VERSIONS = [20, 22, 24];
 const NODE_VERSIONS_STRING = NODE_VERSIONS_TO_REMOVE.map(e => `v${e}`).join(', ');
 
 /**
@@ -88,7 +88,8 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
               .replace(
                   new RegExp(`node${NODE_VERSIONS_TO_REMOVE.join('|')}`, 'g'),
                   `node${NODE_VERSIONS[0]}`
-              )
+              ),
+          { parser: 'babel' }
           );
         }
       },
@@ -110,8 +111,11 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
 
     const stringContent = Buffer.from(content, encoding).toString('utf-8');
 
+    const hasNodeVersionMatrixJob = hasNodeVersionMatrixToRemove(stringContent, NODE_VERSIONS_TO_REMOVE);
+    const hasNodeVersion = hasNodeVersionToRemove(stringContent, NODE_VERSIONS_TO_REMOVE);
+
     if (!update) {
-      if (!hasNodeVersionToRemove(stringContent, NODE_VERSIONS_TO_REMOVE)) {
+      if (!hasNodeVersionMatrixJob && !hasNodeVersion) {
         octokit.log.info(
             'The file \'%s\' does not have any usage of node_version %s to be removed. Skipping...',
             file.name,
@@ -137,29 +141,47 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
     // Update Node versions used in GitHub Actions
     const yamlDocument = parseDocument(stringContent);
 
-    /** @type {YAMLWorkflow} */
-    // @ts-expect-error Why is this `unknown`?
+    /** @type {import("./types.js").JobsMap} */
+    // @ts-expect-error
     const jobs = yamlDocument.get('jobs');
     let hasNodeVersionsMatrix = false;
 
-    for (const { value: job, key: jobName } of jobs.items) {
-      const matrix = job
-          ?.get('strategy')
-          ?.get('matrix');
+    if (hasNodeVersionMatrixJob) {
+      for (const { value: job, key: jobName } of jobs.items) {
+        /** @type {import('./types.js').MatrixMap} */
+        const matrix = job
+            ?.get('strategy')
+            ?.get('matrix');
 
-      const nodeVersions = matrix?.items.find(({ key }) => key.value === 'node' || key.value === 'node_version');
+        const nodeVersions = matrix?.items.find(({ key }) => key.value === 'node' || key.value === 'node_version');
 
-      if (typeof nodeVersions === 'undefined') {
-        continue;
+        if (typeof nodeVersions === 'undefined') {
+          continue;
+        }
+        hasNodeVersionsMatrix = true;
+        yamlDocument.setIn(['jobs', jobName, 'strategy', 'matrix', nodeVersions.key.value], NODE_VERSIONS);
       }
-      hasNodeVersionsMatrix = true;
-      yamlDocument.setIn(['jobs', jobName, 'strategy', 'matrix', nodeVersions.key.value], NODE_VERSIONS);
+
+      if (!hasNodeVersionsMatrix) {
+        octokit.log.info('No node_version matrix found in %s', file.name);
+
+        return null;
+      }
     }
+    if (hasNodeVersion) {
+      for (const { value: job, key: jobName } of jobs.items) {
+        /** @type {import("yaml").YAMLSeq<import("./types.js").StepDefinition>} */
+        const steps = job?.get('steps');
 
-    if (!hasNodeVersionsMatrix) {
-      octokit.log.info('No node_version matrix found in %s', file.name);
+        const nodeVersion = steps?.items?.find(step =>
+          step?.get('uses') &&
+          step?.get('uses').includes('actions/setup-node')
+        );
 
-      return null;
+        if (nodeVersion) {
+          yamlDocument.setIn(['jobs', jobName, 'steps', nodeVersion.key, 'with', 'node-version'], NODE_VERSIONS.at(-1));
+        }
+      }
     }
 
     return await prettier.format(stringify(yamlDocument), { parser: 'yaml' });
@@ -195,7 +217,7 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
     if (e.status === 404) {
       octokit.log.warn(`"${PATH}" path not found in ${repository.full_name}`);
 
-      return;
+      return null;
     }
     throw e;
   }
@@ -230,12 +252,13 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
     changes,
     createWhenEmpty: false,
     update: true,
-    labels: update ? ['Type: Maintenance'] : ['Type: Maintenance', 'Type: Breaking Change']
+    labels: update ? ['Type: Maintenance'] : ['Type: Maintenance', 'Type: Breaking Change'],
+    draft: true
   });
 
 
   if (pr) {
-    const { data: { number, html_url } } = pr;
+    const { data: { html_url } } = pr;
 
     octokit.log.info(`Pull request created: ${html_url}`);
   }
