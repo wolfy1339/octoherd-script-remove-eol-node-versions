@@ -173,13 +173,13 @@ BREAKING CHANGE: Drop support for NodeJS ${NODE_VERSIONS_STRING}`,
         /** @type {import("yaml").YAMLSeq<import("./types.js").StepDefinition>} */
         const steps = job?.get('steps');
 
-        const nodeVersion = steps?.items?.find(step =>
+        const nodeVersion = steps?.items?.findIndex(step =>
           step?.get('uses') &&
           step?.get('uses').includes('actions/setup-node')
         );
 
         if (nodeVersion) {
-          yamlDocument.setIn(['jobs', jobName, 'steps', nodeVersion.key, 'with', 'node-version'], NODE_VERSIONS.at(-1));
+          yamlDocument.setIn(['jobs', jobName, 'steps', nodeVersion, 'with', 'node-version'], NODE_VERSIONS.at(-1));
         }
       }
     }
